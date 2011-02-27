@@ -4386,11 +4386,22 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
 
 #endif
 
+unsigned long set_user_nice_calls = 0;
 void set_user_nice(struct task_struct *p, long nice)
 {
 	int old_prio, delta, on_rq;
 	unsigned long flags;
 	struct rq *rq;
+
+	static unsigned long prev_jiffy = 0;
+	set_user_nice_calls++;
+	if (time_after(jiffies, prev_jiffy + 5*HZ))
+	{
+		prev_jiffy = jiffies;
+		printk(KERN_ERR "set_user_nice from sched.c has been called %lu times. "
+				"This time with task_struct (%p), and nice (%ld)\n", 
+				set_user_nice_calls, p, nice);
+	}
 
 	if (TASK_NICE(p) == nice || nice < -20 || nice > 19)
 		return;
@@ -4438,8 +4449,19 @@ EXPORT_SYMBOL(set_user_nice);
  * @p: task
  * @nice: nice value
  */
+unsigned long can_nice_calls = 0;
 int can_nice(const struct task_struct *p, const int nice)
 {
+	static unsigned long prev_jiffy = 0;
+	can_nice_calls++;
+	if (time_after(jiffies, prev_jiffy + 5*HZ))
+	{
+		prev_jiffy = jiffies;
+		printk(KERN_ERR "can_nice from sched.c has been called %lu times. "
+				"This time with task_struct (%p) and nice (%d)\n", 
+				can_nice_calls, p, nice);
+	}
+
 	/* convert nice value [19,-20] to rlimit style value [1,40] */
 	int nice_rlim = 20 - nice;
 
@@ -4456,9 +4478,20 @@ int can_nice(const struct task_struct *p, const int nice)
  * sys_setpriority is a more generic, but much slower function that
  * does similar things.
  */
+unsigned long nice_calls = 0;
 SYSCALL_DEFINE1(nice, int, increment)
 {
 	long nice, retval;
+
+	static unsigned long prev_jiffy = 0;
+	nice_calls++;
+	if (time_after(jiffies, prev_jiffy + 5*HZ))
+	{
+		prev_jiffy = jiffies;
+		printk(KERN_ERR "nice from sched.c has been called %lu times. "
+				"This time with increment (%d)\n", 
+				nice_calls, increment);
+	}
 
 	/*
 	 * Setpriority might change our priority at the same moment.

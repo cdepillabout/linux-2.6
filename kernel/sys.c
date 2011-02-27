@@ -146,6 +146,8 @@ out:
 	return error;
 }
 
+unsigned long setpriority_calls = 0;
+
 SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 {
 	struct task_struct *g, *p;
@@ -153,6 +155,18 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 	const struct cred *cred = current_cred();
 	int error = -EINVAL;
 	struct pid *pgrp;
+
+	static unsigned long prev_jiffy = 0;
+	setpriority_calls++;
+	if (time_after(jiffies, prev_jiffy + 5*HZ))
+	{
+		prev_jiffy = jiffies;
+		printk(KERN_ERR "setpriority from sys.c has been called %lu times. "
+				"This time with which (%d), who (%d), and niceval (%d)\n", 
+				setpriority_calls, which, who, niceval);
+	}
+
+
 
 	if (which > PRIO_USER || which < PRIO_PROCESS)
 		goto out;
