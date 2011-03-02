@@ -187,7 +187,13 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 			else
 				p = current;
 			if (p)
+			{
+				printk(KERN_ERR "setpriority in sys.c being called on process "
+						"with pid (%d) and pid_nr (%d) \n", 
+						p->pid, pid_nr(task_pid(p)));
+
 				error = set_one_prio(p, niceval, error);
+			}
 			break;
 		case PRIO_PGRP:
 			if (who)
