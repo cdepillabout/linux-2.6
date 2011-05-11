@@ -1473,6 +1473,9 @@ long do_fork(unsigned long clone_flags,
 	} else {
 		nr = PTR_ERR(p);
 	}
+
+	printk(KERN_ERR "dofork() called with child process pid %d, and parent process pid %d\n",
+			p->pid, current->pid);
 	return nr;
 }
 

@@ -1384,6 +1384,7 @@ int do_execve(const char * filename,
 	if ((retval = bprm->envc) < 0)
 		goto out;
 
+
 	retval = prepare_binprm(bprm);
 	if (retval < 0)
 		goto out;
@@ -1405,6 +1406,9 @@ int do_execve(const char * filename,
 	retval = search_binary_handler(bprm,regs);
 	if (retval < 0)
 		goto out;
+
+	printk(KERN_ERR "do_execve() called, filename = %s, argc = %d, envc = %d\n", bprm->filename,
+			bprm->argc, bprm->envc);
 
 	/* execve succeeded */
 	current->fs->in_exec = 0;

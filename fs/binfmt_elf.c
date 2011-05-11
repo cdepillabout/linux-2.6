@@ -156,6 +156,8 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 	const struct cred *cred = current_cred();
 	struct vm_area_struct *vma;
 
+	printk(KERN_ERR "create_elf_tables(), creating auxiliary vector for the loader.\n");
+
 	/*
 	 * In some cases (e.g. Hyper-Threading), we want to avoid L1
 	 * evictions by the processes running on the same package. One
@@ -235,21 +237,52 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
  	NEW_AUX_ENT(AT_SECURE, security_bprm_secureexec(bprm));
 	NEW_AUX_ENT(AT_RANDOM, (elf_addr_t)(unsigned long)u_rand_bytes);
 	NEW_AUX_ENT(AT_EXECFN, bprm->exec);
+
+	printk(KERN_ERR "create_elf_tables(), adding AT_HWCAP = ELF_HWCAP (0x%llx).\n", ELF_HWCAP);
+	printk(KERN_ERR "create_elf_tables(), adding AT_PAGESZ = ELF_EXEC_PAGESIZE (0x%llx).\n", ELF_EXEC_PAGESIZE);
+	printk(KERN_ERR "create_elf_tables(), adding AT_CLKTCK = CLOCKS_PER_SEC (0x%llx).\n", CLOCKS_PER_SEC);
+	printk(KERN_ERR "create_elf_tables(), adding AT_PHDR = load_addr + exec->e_phoff (0x%llx).\n", load_addr + exec->e_phoff);
+	printk(KERN_ERR "create_elf_tables(), adding AT_PHENT = sizeof(struct elf_phdr) (0x%llx).\n", sizeof(struct elf_phdr));
+	printk(KERN_ERR "create_elf_tables(), adding AT_PHNUM = exec->e_phnum (0x%llx).\n", exec->e_phnum);
+	printk(KERN_ERR "create_elf_tables(), adding AT_BASE = interp_load_addr (0x%llx).\n", interp_load_addr);
+	printk(KERN_ERR "create_elf_tables(), adding AT_FLAGS = 0 (0x%llx).\n", 0);
+	printk(KERN_ERR "create_elf_tables(), adding AT_ENTRY = exec->e_entry (0x%llx).\n", exec->e_entry);
+	printk(KERN_ERR "create_elf_tables(), adding AT_UID = cred->uid (%lld).\n", cred->uid);
+	printk(KERN_ERR "create_elf_tables(), adding AT_EUID = cred->euid (%lld).\n", cred->euid);
+	printk(KERN_ERR "create_elf_tables(), adding AT_GID = cred->gid (%lld).\n", cred->gid);
+	printk(KERN_ERR "create_elf_tables(), adding AT_EGID = cred->egid (%lld).\n", cred->egid);
+	printk(KERN_ERR "create_elf_tables(), adding AT_SECURE = security_bprm_secureexec(bprm) (0x%llx).\n", security_bprm_secureexec(bprm));
+	printk(KERN_ERR "create_elf_tables(), adding AT_RANDOM = (elf_addr_t)(unsigned long)u_rand_bytes (0x%llx).\n", (elf_addr_t)(unsigned long)u_rand_bytes);
+	printk(KERN_ERR "create_elf_tables(), adding AT_EXECFN = bprm->exec (0x%llx).\n", bprm->exec);
+
+
 	if (k_platform) {
-		NEW_AUX_ENT(AT_PLATFORM,
-			    (elf_addr_t)(unsigned long)u_platform);
+		printk(KERN_ERR "create_elf_tables(), adding AT_PLATFORM = (elf_addr_t)(unsigned long)u_platform (0x%llx).\n", (elf_addr_t)(unsigned long)u_platform);
+		NEW_AUX_ENT(AT_PLATFORM, (elf_addr_t)(unsigned long)u_platform);
 	}
 	if (k_base_platform) {
-		NEW_AUX_ENT(AT_BASE_PLATFORM,
-			    (elf_addr_t)(unsigned long)u_base_platform);
+		printk(KERN_ERR "create_elf_tables(), adding AT_BASE_PLATFORM = (elf_addr_t)(unsigned long)u_base_platform (0x%llx).\n", (elf_addr_t)(unsigned long)u_base_platform);
+		NEW_AUX_ENT(AT_BASE_PLATFORM, (elf_addr_t)(unsigned long)u_base_platform);
 	}
 	if (bprm->interp_flags & BINPRM_FLAGS_EXECFD) {
+		printk(KERN_ERR "create_elf_tables(), adding AT_EXECFD = bprm->interp_data (0x%llx).\n", bprm->interp_data);
 		NEW_AUX_ENT(AT_EXECFD, bprm->interp_data);
 	}
 #undef NEW_AUX_ENT
 	/* AT_NULL is zero; clear the rest too */
 	memset(&elf_info[ei_index], 0,
 	       sizeof current->mm->saved_auxv - ei_index * sizeof elf_info[0]);
+
+	printk(KERN_ERR "\tcreate_elf_tables(), AT_NULL = 0 and clearing the rest, too.\n");
+	printk(KERN_ERR "create_elf_tables(), memset(&elf_info[ei_index], 0, "
+	       "sizeof current->mm->saved_auxv - ei_index * sizeof elf_info[0])...\n");
+
+	printk(KERN_ERR "create_elf_tables(), sizeof(current->mm->saved_auxv) = %d\n",
+			sizeof(current->mm->saved_auxv));
+	printk(KERN_ERR "create_elf_tables(), ei_index = %d\n", ei_index);
+	printk(KERN_ERR "create_elf_tables(), sizeof(elf_info[0]) = %d\n", sizeof(elf_info[0]));
+	printk(KERN_ERR " sizeof current->mm->saved_auxv - ei_index * sizeof elf_info[0])... = %d\n",
+			sizeof current->mm->saved_auxv - ei_index * sizeof elf_info[0]);
 
 	/* And advance past the AT_NULL entry.  */
 	ei_index += 2;
@@ -282,10 +315,13 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 	argv = sp;
 	envp = argv + argc + 1;
 
+	printk(KERN_ERR "create_elf_tables(), argc = %d, envc = %d\n", argc, envc);
+
 	/* Populate argv and envp */
 	p = current->mm->arg_end = current->mm->arg_start;
 	while (argc-- > 0) {
 		size_t len;
+		printk(KERN_ERR "\tcreate_elf_tables(), argv[%d] = %s\n", argc, p);
 		if (__put_user((elf_addr_t)p, argv++))
 			return -EFAULT;
 		len = strnlen_user((void __user *)p, MAX_ARG_STRLEN);
@@ -298,6 +334,7 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 	current->mm->arg_end = current->mm->env_start = p;
 	while (envc-- > 0) {
 		size_t len;
+		printk(KERN_ERR "\tcreate_elf_tables(), envp[%d] = %s\n", envc, p);
 		if (__put_user((elf_addr_t)p, envp++))
 			return -EFAULT;
 		len = strnlen_user((void __user *)p, MAX_ARG_STRLEN);
@@ -442,6 +479,7 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
 			int elf_prot = 0;
 			unsigned long vaddr = 0;
 			unsigned long k, map_addr;
+			unsigned long old_total_size;
 
 			if (eppnt->p_flags & PF_R)
 		    		elf_prot = PROT_READ;
@@ -457,6 +495,7 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
 
 			map_addr = elf_map(interpreter, load_addr + vaddr,
 					eppnt, elf_prot, elf_type, total_size);
+			old_total_size = total_size;
 			total_size = 0;
 			if (!*interp_map_addr)
 				*interp_map_addr = map_addr;
@@ -499,6 +538,15 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
 			k = load_addr + eppnt->p_memsz + eppnt->p_vaddr;
 			if (k > last_bss)
 				last_bss = k;
+
+			printk(KERN_ERR "load_elf_interp(), mapping PT_LOAD segments... "
+					"elf_bss = 0x%lx, last_bss = 0x%lx, load_addr = 0x%lx, map_addr = 0x%lx,\n"
+					"total_size = 0x%lx\n,"
+					"eppnt->p_offset = 0x%p, eppnt->p_vaddr = 0x%p, eppnt->p_paddr = 0x%p, "
+					"eppnt->p_filesz = 0x%llx, eppnt->p_memsz = 0x%llx\n",
+					elf_bss, last_bss, load_addr, map_addr, old_total_size,
+					eppnt->p_offset, eppnt->p_vaddr, eppnt->p_paddr, 
+					eppnt->p_filesz, eppnt->p_memsz);
 		}
 	}
 
@@ -710,7 +758,12 @@ static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs)
 		/* Verify the interpreter has a valid arch */
 		if (!elf_check_arch(&loc->interp_elf_ex))
 			goto out_free_dentry;
+
 	}
+
+	printk(KERN_ERR "load_elf_binary() called with binary filename %s, interp %s, "
+			"elf interpreter %s\n", 
+			bprm->filename, bprm->interp, elf_interpreter);
 
 	/* Flush all traces of the currently running executable */
 	retval = flush_old_exec(bprm);
@@ -857,6 +910,14 @@ static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs)
 		k = elf_ppnt->p_vaddr + elf_ppnt->p_memsz;
 		if (k > elf_brk)
 			elf_brk = k;
+
+		printk(KERN_ERR "load_elf_binary(), mapping PT_LOAD segments... "
+				"elf_bss = 0x%lx, end_code = 0x%lx, end_data = 0x%lx, elf_brk = 0x%lx,\n"
+				"elf_ppnt->p_offset = 0x%p, elf_ppnt->p_vaddr = 0x%p, elf_ppnt->p_paddr = 0x%p, "
+				"elf_ppnt->p_filesz = 0x%llx, elf_ppnt->p_memsz = 0x%llx\n",
+				elf_bss, end_code, end_data, elf_brk,
+				elf_ppnt->p_offset, elf_ppnt->p_vaddr, elf_ppnt->p_paddr, 
+				elf_ppnt->p_filesz, elf_ppnt->p_memsz);
 	}
 
 	loc->elf_ex.e_entry += load_bias;
@@ -909,6 +970,8 @@ static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs)
 		allow_write_access(interpreter);
 		fput(interpreter);
 		kfree(elf_interpreter);
+
+		printk(KERN_ERR "load_elf_binary(), loaded interpreter\n");
 	} else {
 		elf_entry = loc->elf_ex.e_entry;
 		if (BAD_ADDR(elf_entry)) {
@@ -945,6 +1008,8 @@ static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs)
 	current->mm->end_data = end_data;
 	current->mm->start_stack = bprm->p;
 
+	printk(KERN_ERR "load_elf_binary(), created elf tables\n");
+
 #ifdef arch_randomize_brk
 	if ((current->flags & PF_RANDOMIZE) && (randomize_va_space > 1))
 		current->mm->brk = current->mm->start_brk =
@@ -976,7 +1041,9 @@ static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs)
 	ELF_PLAT_INIT(regs, reloc_func_desc);
 #endif
 
+	printk(KERN_ERR "load_elf_binary(), about to start thread with elf entry %llx\n", elf_entry);
 	start_thread(regs, elf_entry, bprm->p);
+	printk(KERN_ERR "load_elf_binary(), started thread\n");
 	retval = 0;
 out:
 	kfree(loc);
